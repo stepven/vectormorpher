@@ -1401,16 +1401,6 @@ const VectorMorphTool = () => {
   
   const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
   
-  // Smooth noise function using multiple sine/cosine waves
-  const smoothNoise = (iteration: number, seed: number, frequency: number) => {
-    // Combine multiple wave patterns for organic movement
-    const wave1 = Math.sin(iteration * frequency) * Math.cos(iteration * frequency * 0.5);
-    const wave2 = Math.sin(iteration * frequency * 1.3 + seed) * 0.5;
-    const wave3 = Math.cos(iteration * frequency * 0.7 + seed * 2) * 0.3;
-    
-    return wave1 + wave2 + wave3;
-  };
-  
   // Flow field that creates directional, flowing distortion
   const flowField = (x: number, y: number, time: number, scale: number) => {
     // Create flowing directional field using sine waves
