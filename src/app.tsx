@@ -582,13 +582,13 @@ const VectorMorphTool = () => {
         const ctx = canvas.getContext('2d');
         if (ctx) {
           // Save current canvas state
-          ctx.save();
-          
-          const dimensions = getCanvasDimensions();
-          // Use device pixel ratio for crisp rendering
-          const dpr = window.devicePixelRatio || 1;
-          
-          // Reset transform to work in logical coordinates
+        ctx.save();
+        
+        const dimensions = getCanvasDimensions();
+        // Use device pixel ratio for crisp rendering (dpr is used for context)
+        const dpr = window.devicePixelRatio || 1; // eslint-disable-line @typescript-eslint/no-unused-vars
+        
+        // Reset transform to work in logical coordinates
           ctx.setTransform(1, 0, 0, 1, 0, 0);
           
           // Clear canvas using logical dimensions
