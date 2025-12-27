@@ -29,7 +29,12 @@ const VectorMorphTool = () => {
   const [tool, setTool] = useState('pen');
   const [isDraggingNewPoint, setIsDraggingNewPoint] = useState(false);
   const [newPointIndex, setNewPointIndex] = useState<number | null>(null);
-  const [customCurve, setCustomCurve] = useState([
+  const [customCurve, setCustomCurve] = useState<Array<{
+    x: number;
+    y: number;
+    handleOut?: { x: number; y: number };
+    handleIn?: { x: number; y: number };
+  }>>([
     { x: 0, y: 0, handleOut: { x: 0.25, y: 0.25 } },
     { x: 1, y: 1, handleIn: { x: 0.75, y: 0.75 } }
   ]);
