@@ -1144,32 +1144,38 @@ const VectorMorphTool = () => {
         let pointsToDraw = adjustedPoints;
         
         if (distortionAmount > 0) {
-          // Create distorted version of points for this iteration
-          pointsToDraw = adjustedPoints.map((point, idx) => {
-            // Generate unique noise for each point based on iteration and point index
-            const noiseX1 = smoothNoise(i + idx * 10, 1.0, 0.08);
-            const noiseY1 = smoothNoise(i + idx * 10, 2.0, 0.1);
+          // Apply flow field distortion to create smooth, directional warping
+          pointsToDraw = adjustedPoints.map((point: any) => {
+            // Use iteration and point position to sample flow field
+            const time = i * 0.1; // Progression through iterations acts as "time"
             
-            // Apply distortion to anchor point
-            const distortX = noiseX1 * distortionAmount * 15 * scale;
-            const distortY = noiseY1 * distortionAmount * 15 * scale;
+            // Sample flow field at point position
+            const flow = flowField(point.x, point.y, time, distortionAmount * 30 * scale);
             
-            // Apply distortion to handle points (makes curves wobble)
-            const handleInDistortX = smoothNoise(i + idx * 10 + 100, 5.0, 0.11) * distortionAmount * 12 * scale;
-            const handleInDistortY = smoothNoise(i + idx * 10 + 100, 6.0, 0.13) * distortionAmount * 12 * scale;
-            const handleOutDistortX = smoothNoise(i + idx * 10 + 200, 7.0, 0.09) * distortionAmount * 12 * scale;
-            const handleOutDistortY = smoothNoise(i + idx * 10 + 200, 8.0, 0.14) * distortionAmount * 12 * scale;
+            // Sample flow for handles (offset sampling positions for variety)
+            const flowHandleIn = flowField(
+              point.handleIn.x + 50, 
+              point.handleIn.y + 50, 
+              time, 
+              distortionAmount * 20 * scale
+            );
+            const flowHandleOut = flowField(
+              point.handleOut.x - 50, 
+              point.handleOut.y - 50, 
+              time, 
+              distortionAmount * 20 * scale
+            );
             
             return {
-              x: point.x + distortX,
-              y: point.y + distortY,
+              x: point.x + flow.x,
+              y: point.y + flow.y,
               handleIn: {
-                x: point.handleIn.x + handleInDistortX,
-                y: point.handleIn.y + handleInDistortY
+                x: point.handleIn.x + flowHandleIn.x,
+                y: point.handleIn.y + flowHandleIn.y
               },
               handleOut: {
-                x: point.handleOut.x + handleOutDistortX,
-                y: point.handleOut.y + handleOutDistortY
+                x: point.handleOut.x + flowHandleOut.x,
+                y: point.handleOut.y + flowHandleOut.y
               }
             };
           });
@@ -1401,6 +1407,22 @@ const VectorMorphTool = () => {
     return wave1 + wave2 + wave3;
   };
   
+  // Flow field that creates directional, flowing distortion
+  const flowField = (x: number, y: number, time: number, scale: number) => {
+    // Create flowing directional field using sine waves
+    const angleX = Math.sin(x * 0.01 + time * 0.3) * Math.cos(y * 0.008);
+    const angleY = Math.cos(x * 0.008 + time * 0.2) * Math.sin(y * 0.01);
+    
+    // Combine multiple frequencies for complexity
+    const angle = angleX + angleY + 
+                  Math.sin(x * 0.005 + y * 0.005 + time * 0.5) * 0.5;
+    
+    return {
+      x: Math.cos(angle) * scale,
+      y: Math.sin(angle) * scale
+    };
+  };
+  
   const hexToRgb = (hex: string) => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result ? {
@@ -1520,32 +1542,38 @@ const VectorMorphTool = () => {
       let pointsToDraw = adjustedPoints;
       
       if (distortionAmount > 0) {
-        // Create distorted version of points for this iteration
-        pointsToDraw = adjustedPoints.map((point: any, idx: number) => {
-          // Generate unique noise for each point based on iteration and point index
-          const noiseX1 = smoothNoise(i + idx * 10, 1.0, 0.08);
-          const noiseY1 = smoothNoise(i + idx * 10, 2.0, 0.1);
+        // Apply flow field distortion to create smooth, directional warping
+        pointsToDraw = adjustedPoints.map((point: any) => {
+          // Use iteration and point position to sample flow field
+          const time = i * 0.1; // Progression through iterations acts as "time"
           
-          // Apply distortion to anchor point
-          const distortX = noiseX1 * distortionAmount * 15;
-          const distortY = noiseY1 * distortionAmount * 15;
+          // Sample flow field at point position
+          const flow = flowField(point.x, point.y, time, distortionAmount * 30);
           
-          // Apply distortion to handle points (makes curves wobble)
-          const handleInDistortX = smoothNoise(i + idx * 10 + 100, 5.0, 0.11) * distortionAmount * 12;
-          const handleInDistortY = smoothNoise(i + idx * 10 + 100, 6.0, 0.13) * distortionAmount * 12;
-          const handleOutDistortX = smoothNoise(i + idx * 10 + 200, 7.0, 0.09) * distortionAmount * 12;
-          const handleOutDistortY = smoothNoise(i + idx * 10 + 200, 8.0, 0.14) * distortionAmount * 12;
+          // Sample flow for handles (offset sampling positions for variety)
+          const flowHandleIn = flowField(
+            point.handleIn.x + 50, 
+            point.handleIn.y + 50, 
+            time, 
+            distortionAmount * 20
+          );
+          const flowHandleOut = flowField(
+            point.handleOut.x - 50, 
+            point.handleOut.y - 50, 
+            time, 
+            distortionAmount * 20
+          );
           
           return {
-            x: point.x + distortX,
-            y: point.y + distortY,
+            x: point.x + flow.x,
+            y: point.y + flow.y,
             handleIn: {
-              x: point.handleIn.x + handleInDistortX,
-              y: point.handleIn.y + handleInDistortY
+              x: point.handleIn.x + flowHandleIn.x,
+              y: point.handleIn.y + flowHandleIn.y
             },
             handleOut: {
-              x: point.handleOut.x + handleOutDistortX,
-              y: point.handleOut.y + handleOutDistortY
+              x: point.handleOut.x + flowHandleOut.x,
+              y: point.handleOut.y + flowHandleOut.y
             }
           };
         });
