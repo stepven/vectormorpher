@@ -1145,25 +1145,29 @@ const VectorMorphTool = () => {
         
         if (distortionAmount > 0) {
           // Apply flow field distortion to create smooth, directional warping
+          // Add random variation per iteration for non-uniform displacement
+          const iterationVariation = seededRandom(i * 12.9898) * 0.6 + 0.4; // Range: 0.4 to 1.0
+          const randomScale = distortionAmount * iterationVariation;
+          
           pointsToDraw = adjustedPoints.map((point: any) => {
             // Use iteration and point position to sample flow field
             const time = i * 0.1; // Progression through iterations acts as "time"
             
-            // Sample flow field at point position
-            const flow = flowField(point.x, point.y, time, distortionAmount * 30 * scale);
+            // Sample flow field at point position with random variation
+            const flow = flowField(point.x, point.y, time, randomScale * 30 * scale);
             
             // Sample flow for handles (offset sampling positions for variety)
             const flowHandleIn = flowField(
               point.handleIn.x + 50, 
               point.handleIn.y + 50, 
               time, 
-              distortionAmount * 20 * scale
+              randomScale * 20 * scale
             );
             const flowHandleOut = flowField(
               point.handleOut.x - 50, 
               point.handleOut.y - 50, 
               time, 
-              distortionAmount * 20 * scale
+              randomScale * 20 * scale
             );
             
             return {
@@ -1423,6 +1427,12 @@ const VectorMorphTool = () => {
     };
   };
   
+  // Seeded random for consistent but varied distortion per iteration
+  const seededRandom = (seed: number) => {
+    const x = Math.sin(seed) * 10000;
+    return x - Math.floor(x);
+  };
+  
   const hexToRgb = (hex: string) => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result ? {
@@ -1543,25 +1553,29 @@ const VectorMorphTool = () => {
       
       if (distortionAmount > 0) {
         // Apply flow field distortion to create smooth, directional warping
+        // Add random variation per iteration for non-uniform displacement
+        const iterationVariation = seededRandom(i * 12.9898) * 0.6 + 0.4; // Range: 0.4 to 1.0
+        const randomScale = distortionAmount * iterationVariation;
+        
         pointsToDraw = adjustedPoints.map((point: any) => {
           // Use iteration and point position to sample flow field
           const time = i * 0.1; // Progression through iterations acts as "time"
           
-          // Sample flow field at point position
-          const flow = flowField(point.x, point.y, time, distortionAmount * 30);
+          // Sample flow field at point position with random variation
+          const flow = flowField(point.x, point.y, time, randomScale * 30);
           
           // Sample flow for handles (offset sampling positions for variety)
           const flowHandleIn = flowField(
             point.handleIn.x + 50, 
             point.handleIn.y + 50, 
             time, 
-            distortionAmount * 20
+            randomScale * 20
           );
           const flowHandleOut = flowField(
             point.handleOut.x - 50, 
             point.handleOut.y - 50, 
             time, 
-            distortionAmount * 20
+            randomScale * 20
           );
           
           return {
