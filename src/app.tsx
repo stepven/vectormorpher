@@ -585,6 +585,7 @@ const VectorMorphTool = () => {
           ctx.save();
           
           const dimensions = getCanvasDimensions();
+          // Use device pixel ratio for crisp rendering
           const dpr = window.devicePixelRatio || 1;
           
           // Reset transform to work in logical coordinates
@@ -1688,7 +1689,6 @@ const VectorMorphTool = () => {
     
     // Set canvas resolution based on device pixel ratio for crisp rendering
     const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
     
     // Set internal resolution at device pixel ratio
     canvas.width = dimensions.width * dpr;
