@@ -2222,7 +2222,7 @@ const VectorMorphTool = () => {
       <div className="bg-[#f5f5f5] p-2 rounded flex-shrink min-h-0">
         <canvas
           ref={canvasRef}
-          className="border-2 border-zinc-300 p-2 cursor-crosshair bg-[#f5f5f5] w-full h-auto max-h-full object-contain"
+          className="p-2 cursor-crosshair bg-[#f5f5f5] w-full h-auto max-h-full object-contain"
           onMouseDown={handleCanvasMouseDown}
           onMouseMove={handleCanvasMouseMove}
           onMouseUp={handleCanvasMouseUp}
