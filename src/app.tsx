@@ -1138,35 +1138,48 @@ const VectorMorphTool = () => {
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         
-        // Apply smooth distortion if distortion > 0
+        // Apply smooth distortion to the actual shape points
         const distortionAmount = shape.distortion || 0;
+        
+        let pointsToDraw = adjustedPoints;
+        
         if (distortionAmount > 0) {
-          // Generate smooth noise patterns
-          const noiseX = smoothNoise(i, 1.0, 0.08);
-          const noiseY = smoothNoise(i, 2.0, 0.1);
-          const noiseRotation = smoothNoise(i, 3.0, 0.12);
-          const noiseScale = smoothNoise(i, 4.0, 0.15);
-          
-          // Apply distortion with smooth waves
-          const distortX = noiseX * distortionAmount * 25 * scale;
-          const distortY = noiseY * distortionAmount * 25 * scale;
-          const distortRotate = noiseRotation * distortionAmount * 0.15; // radians
-          const distortScaleAmount = 1 + (noiseScale * distortionAmount * 0.08);
-          
-          ctx.save();
-          ctx.translate(distortX, distortY);
-          drawBezierPath(ctx, adjustedPoints);
-          ctx.restore();
-          
-          // Apply base rotation + distortion rotation
-          ctx.rotate((shape.rotation * Math.PI) / 180 + distortRotate);
-          ctx.scale(shape.scale * distortScaleAmount, shape.scale * distortScaleAmount);
-        } else {
-          // No distortion - original behavior
-          drawBezierPath(ctx, adjustedPoints);
-          ctx.rotate((shape.rotation * Math.PI) / 180);
-          ctx.scale(shape.scale, shape.scale);
+          // Create distorted version of points for this iteration
+          pointsToDraw = adjustedPoints.map((point, idx) => {
+            // Generate unique noise for each point based on iteration and point index
+            const noiseX1 = smoothNoise(i + idx * 10, 1.0, 0.08);
+            const noiseY1 = smoothNoise(i + idx * 10, 2.0, 0.1);
+            
+            // Apply distortion to anchor point
+            const distortX = noiseX1 * distortionAmount * 15 * scale;
+            const distortY = noiseY1 * distortionAmount * 15 * scale;
+            
+            // Apply distortion to handle points (makes curves wobble)
+            const handleInDistortX = smoothNoise(i + idx * 10 + 100, 5.0, 0.11) * distortionAmount * 12 * scale;
+            const handleInDistortY = smoothNoise(i + idx * 10 + 100, 6.0, 0.13) * distortionAmount * 12 * scale;
+            const handleOutDistortX = smoothNoise(i + idx * 10 + 200, 7.0, 0.09) * distortionAmount * 12 * scale;
+            const handleOutDistortY = smoothNoise(i + idx * 10 + 200, 8.0, 0.14) * distortionAmount * 12 * scale;
+            
+            return {
+              x: point.x + distortX,
+              y: point.y + distortY,
+              handleIn: {
+                x: point.handleIn.x + handleInDistortX,
+                y: point.handleIn.y + handleInDistortY
+              },
+              handleOut: {
+                x: point.handleOut.x + handleOutDistortX,
+                y: point.handleOut.y + handleOutDistortY
+              }
+            };
+          });
         }
+        
+        // Draw the distorted (or original) points
+        drawBezierPath(ctx, pointsToDraw);
+        
+        ctx.rotate((shape.rotation * Math.PI) / 180);
+        ctx.scale(shape.scale, shape.scale);
       }
       
       ctx.restore();
@@ -1501,35 +1514,48 @@ const VectorMorphTool = () => {
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       
-      // Apply smooth distortion if distortion > 0
+      // Apply smooth distortion to the actual shape points
       const distortionAmount = shape.distortion || 0;
+      
+      let pointsToDraw = adjustedPoints;
+      
       if (distortionAmount > 0) {
-        // Generate smooth noise patterns
-        const noiseX = smoothNoise(i, 1.0, 0.08);
-        const noiseY = smoothNoise(i, 2.0, 0.1);
-        const noiseRotation = smoothNoise(i, 3.0, 0.12);
-        const noiseScale = smoothNoise(i, 4.0, 0.15);
-        
-        // Apply distortion with smooth waves
-        const distortX = noiseX * distortionAmount * 25;
-        const distortY = noiseY * distortionAmount * 25;
-        const distortRotate = noiseRotation * distortionAmount * 0.15; // radians
-        const distortScaleAmount = 1 + (noiseScale * distortionAmount * 0.08);
-        
-        ctx.save();
-        ctx.translate(distortX, distortY);
-        drawBezierPath(ctx, adjustedPoints);
-        ctx.restore();
-        
-        // Apply base rotation + distortion rotation
-        ctx.rotate((shape.rotation * Math.PI) / 180 + distortRotate);
-        ctx.scale(shape.scale * distortScaleAmount, shape.scale * distortScaleAmount);
-      } else {
-        // No distortion - original behavior
-        drawBezierPath(ctx, adjustedPoints);
-        ctx.rotate((shape.rotation * Math.PI) / 180);
-        ctx.scale(shape.scale, shape.scale);
+        // Create distorted version of points for this iteration
+        pointsToDraw = adjustedPoints.map((point: any, idx: number) => {
+          // Generate unique noise for each point based on iteration and point index
+          const noiseX1 = smoothNoise(i + idx * 10, 1.0, 0.08);
+          const noiseY1 = smoothNoise(i + idx * 10, 2.0, 0.1);
+          
+          // Apply distortion to anchor point
+          const distortX = noiseX1 * distortionAmount * 15;
+          const distortY = noiseY1 * distortionAmount * 15;
+          
+          // Apply distortion to handle points (makes curves wobble)
+          const handleInDistortX = smoothNoise(i + idx * 10 + 100, 5.0, 0.11) * distortionAmount * 12;
+          const handleInDistortY = smoothNoise(i + idx * 10 + 100, 6.0, 0.13) * distortionAmount * 12;
+          const handleOutDistortX = smoothNoise(i + idx * 10 + 200, 7.0, 0.09) * distortionAmount * 12;
+          const handleOutDistortY = smoothNoise(i + idx * 10 + 200, 8.0, 0.14) * distortionAmount * 12;
+          
+          return {
+            x: point.x + distortX,
+            y: point.y + distortY,
+            handleIn: {
+              x: point.handleIn.x + handleInDistortX,
+              y: point.handleIn.y + handleInDistortY
+            },
+            handleOut: {
+              x: point.handleOut.x + handleOutDistortX,
+              y: point.handleOut.y + handleOutDistortY
+            }
+          };
+        });
       }
+      
+      // Draw the distorted (or original) points
+      drawBezierPath(ctx, pointsToDraw);
+      
+      ctx.rotate((shape.rotation * Math.PI) / 180);
+      ctx.scale(shape.scale, shape.scale);
     }
     
     ctx.restore();
