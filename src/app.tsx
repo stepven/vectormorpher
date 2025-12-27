@@ -585,8 +585,6 @@ const VectorMorphTool = () => {
         ctx.save();
         
         const dimensions = getCanvasDimensions();
-        // Use device pixel ratio for crisp rendering (dpr is used for context)
-        const dpr = window.devicePixelRatio || 1; // eslint-disable-line @typescript-eslint/no-unused-vars
         
         // Reset transform to work in logical coordinates
           ctx.setTransform(1, 0, 0, 1, 0, 0);
