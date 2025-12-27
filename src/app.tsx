@@ -18,7 +18,8 @@ const VectorMorphTool = () => {
     opacity: 0.8,
     color: '#000000',
     startWidth: 2,
-    endWidth: 0.5
+    endWidth: 0.5,
+    distortion: 0
   });
   
   const [selectedPoint, setSelectedPoint] = useState<number | null>(null);
@@ -694,7 +695,8 @@ const VectorMorphTool = () => {
       opacity: shapeToEdit.opacity,
       color: shapeToEdit.color,
       startWidth: shapeToEdit.startWidth,
-      endWidth: shapeToEdit.endWidth
+      endWidth: shapeToEdit.endWidth,
+      distortion: shapeToEdit.distortion || 0
     });
     
     // Remove the shape from saved shapes (user can save it again after editing)
@@ -1136,10 +1138,35 @@ const VectorMorphTool = () => {
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         
-        drawBezierPath(ctx, adjustedPoints);
-        
-        ctx.rotate((shape.rotation * Math.PI) / 180);
-        ctx.scale(shape.scale, shape.scale);
+        // Apply smooth distortion if distortion > 0
+        const distortionAmount = shape.distortion || 0;
+        if (distortionAmount > 0) {
+          // Generate smooth noise patterns
+          const noiseX = smoothNoise(i, 1.0, 0.08);
+          const noiseY = smoothNoise(i, 2.0, 0.1);
+          const noiseRotation = smoothNoise(i, 3.0, 0.12);
+          const noiseScale = smoothNoise(i, 4.0, 0.15);
+          
+          // Apply distortion with smooth waves
+          const distortX = noiseX * distortionAmount * 25 * scale;
+          const distortY = noiseY * distortionAmount * 25 * scale;
+          const distortRotate = noiseRotation * distortionAmount * 0.15; // radians
+          const distortScaleAmount = 1 + (noiseScale * distortionAmount * 0.08);
+          
+          ctx.save();
+          ctx.translate(distortX, distortY);
+          drawBezierPath(ctx, adjustedPoints);
+          ctx.restore();
+          
+          // Apply base rotation + distortion rotation
+          ctx.rotate((shape.rotation * Math.PI) / 180 + distortRotate);
+          ctx.scale(shape.scale * distortScaleAmount, shape.scale * distortScaleAmount);
+        } else {
+          // No distortion - original behavior
+          drawBezierPath(ctx, adjustedPoints);
+          ctx.rotate((shape.rotation * Math.PI) / 180);
+          ctx.scale(shape.scale, shape.scale);
+        }
       }
       
       ctx.restore();
@@ -1351,6 +1378,16 @@ const VectorMorphTool = () => {
   
   const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
   
+  // Smooth noise function using multiple sine/cosine waves
+  const smoothNoise = (iteration: number, seed: number, frequency: number) => {
+    // Combine multiple wave patterns for organic movement
+    const wave1 = Math.sin(iteration * frequency) * Math.cos(iteration * frequency * 0.5);
+    const wave2 = Math.sin(iteration * frequency * 1.3 + seed) * 0.5;
+    const wave3 = Math.cos(iteration * frequency * 0.7 + seed * 2) * 0.3;
+    
+    return wave1 + wave2 + wave3;
+  };
+  
   const hexToRgb = (hex: string) => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result ? {
@@ -1413,7 +1450,8 @@ const VectorMorphTool = () => {
       opacity: lerp(shape1.opacity, shape2.opacity, t),
       color: lerpColor(shape1.color, shape2.color, t),
       startWidth: lerp(shape1.startWidth, shape2.startWidth, t),
-      endWidth: lerp(shape1.endWidth, shape2.endWidth, t)
+      endWidth: lerp(shape1.endWidth, shape2.endWidth, t),
+      distortion: lerp(shape1.distortion || 0, shape2.distortion || 0, t)
     };
   };
   // CONTINUATION FROM PART 1
@@ -1463,10 +1501,35 @@ const VectorMorphTool = () => {
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       
-      drawBezierPath(ctx, adjustedPoints);
-      
-      ctx.rotate((shape.rotation * Math.PI) / 180);
-      ctx.scale(shape.scale, shape.scale);
+      // Apply smooth distortion if distortion > 0
+      const distortionAmount = shape.distortion || 0;
+      if (distortionAmount > 0) {
+        // Generate smooth noise patterns
+        const noiseX = smoothNoise(i, 1.0, 0.08);
+        const noiseY = smoothNoise(i, 2.0, 0.1);
+        const noiseRotation = smoothNoise(i, 3.0, 0.12);
+        const noiseScale = smoothNoise(i, 4.0, 0.15);
+        
+        // Apply distortion with smooth waves
+        const distortX = noiseX * distortionAmount * 25;
+        const distortY = noiseY * distortionAmount * 25;
+        const distortRotate = noiseRotation * distortionAmount * 0.15; // radians
+        const distortScaleAmount = 1 + (noiseScale * distortionAmount * 0.08);
+        
+        ctx.save();
+        ctx.translate(distortX, distortY);
+        drawBezierPath(ctx, adjustedPoints);
+        ctx.restore();
+        
+        // Apply base rotation + distortion rotation
+        ctx.rotate((shape.rotation * Math.PI) / 180 + distortRotate);
+        ctx.scale(shape.scale * distortScaleAmount, shape.scale * distortScaleAmount);
+      } else {
+        // No distortion - original behavior
+        drawBezierPath(ctx, adjustedPoints);
+        ctx.rotate((shape.rotation * Math.PI) / 180);
+        ctx.scale(shape.scale, shape.scale);
+      }
     }
     
     ctx.restore();
@@ -2029,6 +2092,36 @@ const VectorMorphTool = () => {
                 step="0.1"
                 value={currentShape.endWidth}
                 onChange={(e) => setCurrentShape({...currentShape, endWidth: Number(e.target.value)})}
+                className="w-full"
+              />
+            </div>
+            
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label className="block text-sm font-light">Distortion</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={currentShape.distortion?.toFixed(2) || "0.00"}
+                  onChange={(e) => setCurrentShape({
+                    ...currentShape, 
+                    distortion: Math.min(1, Math.max(0, Number(e.target.value)))
+                  })}
+                  className="w-15 bg-[#f5f5f5] px-1 py-0.5 rounded text-sm font-light text-right"
+                />
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={currentShape.distortion || 0}
+                onChange={(e) => setCurrentShape({
+                  ...currentShape, 
+                  distortion: Number(e.target.value)
+                })}
                 className="w-full"
               />
             </div>
