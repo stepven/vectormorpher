@@ -19,7 +19,9 @@ const VectorMorphTool = () => {
     color: '#000000',
     startWidth: 2,
     endWidth: 0.5,
-    distortion: 0
+    displacementAmount: 0,
+    iterationDistortion: 0,
+    uniformity: 0.5
   });
   
   const [selectedPoint, setSelectedPoint] = useState<number | null>(null);
@@ -696,7 +698,9 @@ const VectorMorphTool = () => {
       color: shapeToEdit.color,
       startWidth: shapeToEdit.startWidth,
       endWidth: shapeToEdit.endWidth,
-      distortion: shapeToEdit.distortion || 0
+      displacementAmount: shapeToEdit.displacementAmount || shapeToEdit.distortion || 0,
+      iterationDistortion: shapeToEdit.iterationDistortion || 0,
+      uniformity: shapeToEdit.uniformity !== undefined ? shapeToEdit.uniformity : 0.5
     });
     
     // Remove the shape from saved shapes (user can save it again after editing)
@@ -1139,20 +1143,23 @@ const VectorMorphTool = () => {
         ctx.lineJoin = 'round';
         
         // Apply smooth distortion to the actual shape points
-        const distortionAmount = shape.distortion || 0;
+        const displacementAmount = shape.displacementAmount !== undefined ? shape.displacementAmount : (shape.distortion || 0);
+        const iterationDistortion = shape.iterationDistortion || 0;
+        const uniformity = shape.uniformity !== undefined ? shape.uniformity : 0.5;
         
         let pointsToDraw = adjustedPoints;
         
-        if (distortionAmount > 0) {
+        if (displacementAmount > 0) {
           // Apply flow field distortion to create smooth, directional warping
-          // Add random variation per iteration for non-uniform displacement
-          const iterationVariation = seededRandom(i * 12.9898) * 0.6 + 0.4; // Range: 0.4 to 1.0
-          const randomScale = distortionAmount * iterationVariation;
+          // Uniformity controls randomness: 0 = very random, 1 = uniform
+          const randomRange = (1 - uniformity) * 0.6; // Max range when uniformity = 0
+          const iterationVariation = seededRandom(i * 12.9898) * randomRange + (1 - randomRange); // Range based on uniformity
+          const randomScale = displacementAmount * iterationVariation;
+          
+          // Iteration distortion controls time-based variation
+          const time = i * 0.1 * (1 + iterationDistortion * 0.5); // More variation with higher iterationDistortion
           
           pointsToDraw = adjustedPoints.map((point: any) => {
-            // Use iteration and point position to sample flow field
-            const time = i * 0.1; // Progression through iterations acts as "time"
-            
             // Sample flow field at point position with random variation
             const flow = flowField(point.x, point.y, time, randomScale * 30 * scale);
             
@@ -1486,7 +1493,13 @@ const VectorMorphTool = () => {
       color: lerpColor(shape1.color, shape2.color, t),
       startWidth: lerp(shape1.startWidth, shape2.startWidth, t),
       endWidth: lerp(shape1.endWidth, shape2.endWidth, t),
-      distortion: lerp(shape1.distortion || 0, shape2.distortion || 0, t)
+      displacementAmount: lerp(
+        shape1.displacementAmount !== undefined ? shape1.displacementAmount : (shape1.distortion || 0),
+        shape2.displacementAmount !== undefined ? shape2.displacementAmount : (shape2.distortion || 0),
+        t
+      ),
+      iterationDistortion: lerp(shape1.iterationDistortion || 0, shape2.iterationDistortion || 0, t),
+      uniformity: lerp(shape1.uniformity !== undefined ? shape1.uniformity : 0.5, shape2.uniformity !== undefined ? shape2.uniformity : 0.5, t)
     };
   };
   // CONTINUATION FROM PART 1
@@ -1537,20 +1550,23 @@ const VectorMorphTool = () => {
       ctx.lineJoin = 'round';
       
       // Apply smooth distortion to the actual shape points
-      const distortionAmount = shape.distortion || 0;
+      const displacementAmount = shape.displacementAmount !== undefined ? shape.displacementAmount : (shape.distortion || 0);
+      const iterationDistortion = shape.iterationDistortion || 0;
+      const uniformity = shape.uniformity !== undefined ? shape.uniformity : 0.5;
       
       let pointsToDraw = adjustedPoints;
       
-      if (distortionAmount > 0) {
+      if (displacementAmount > 0) {
         // Apply flow field distortion to create smooth, directional warping
-        // Add random variation per iteration for non-uniform displacement
-        const iterationVariation = seededRandom(i * 12.9898) * 0.6 + 0.4; // Range: 0.4 to 1.0
-        const randomScale = distortionAmount * iterationVariation;
+        // Uniformity controls randomness: 0 = very random, 1 = uniform
+        const randomRange = (1 - uniformity) * 0.6; // Max range when uniformity = 0
+        const iterationVariation = seededRandom(i * 12.9898) * randomRange + (1 - randomRange); // Range based on uniformity
+        const randomScale = displacementAmount * iterationVariation;
+        
+        // Iteration distortion controls time-based variation
+        const time = i * 0.1 * (1 + iterationDistortion * 0.5); // More variation with higher iterationDistortion
         
         pointsToDraw = adjustedPoints.map((point: any) => {
-          // Use iteration and point position to sample flow field
-          const time = i * 0.1; // Progression through iterations acts as "time"
-          
           // Sample flow field at point position with random variation
           const flow = flowField(point.x, point.y, time, randomScale * 30);
           
@@ -2156,16 +2172,16 @@ const VectorMorphTool = () => {
             
             <div>
               <div className="flex justify-between items-center mb-1">
-                <label className="block text-sm font-light">Distortion</label>
+                <label className="block text-sm font-light">Displacement Amount</label>
                 <input
                   type="number"
                   min="0"
                   max="1"
                   step="0.05"
-                  value={currentShape.distortion?.toFixed(2) || "0.00"}
+                  value={currentShape.displacementAmount?.toFixed(2) || "0.00"}
                   onChange={(e) => setCurrentShape({
                     ...currentShape, 
-                    distortion: Math.min(1, Math.max(0, Number(e.target.value)))
+                    displacementAmount: Math.min(1, Math.max(0, Number(e.target.value)))
                   })}
                   className="w-15 bg-[#f5f5f5] px-1 py-0.5 rounded text-sm font-light text-right"
                 />
@@ -2175,10 +2191,70 @@ const VectorMorphTool = () => {
                 min="0"
                 max="1"
                 step="0.05"
-                value={currentShape.distortion || 0}
+                value={currentShape.displacementAmount || 0}
                 onChange={(e) => setCurrentShape({
                   ...currentShape, 
-                  distortion: Number(e.target.value)
+                  displacementAmount: Number(e.target.value)
+                })}
+                className="w-full"
+              />
+            </div>
+            
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label className="block text-sm font-light">Iteration Distortion</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={currentShape.iterationDistortion?.toFixed(2) || "0.00"}
+                  onChange={(e) => setCurrentShape({
+                    ...currentShape, 
+                    iterationDistortion: Math.min(1, Math.max(0, Number(e.target.value)))
+                  })}
+                  className="w-15 bg-[#f5f5f5] px-1 py-0.5 rounded text-sm font-light text-right"
+                />
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={currentShape.iterationDistortion || 0}
+                onChange={(e) => setCurrentShape({
+                  ...currentShape, 
+                  iterationDistortion: Number(e.target.value)
+                })}
+                className="w-full"
+              />
+            </div>
+            
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label className="block text-sm font-light">Uniformity</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={currentShape.uniformity?.toFixed(2) || "0.50"}
+                  onChange={(e) => setCurrentShape({
+                    ...currentShape, 
+                    uniformity: Math.min(1, Math.max(0, Number(e.target.value)))
+                  })}
+                  className="w-15 bg-[#f5f5f5] px-1 py-0.5 rounded text-sm font-light text-right"
+                />
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={currentShape.uniformity !== undefined ? currentShape.uniformity : 0.5}
+                onChange={(e) => setCurrentShape({
+                  ...currentShape, 
+                  uniformity: Number(e.target.value)
                 })}
                 className="w-full"
               />
