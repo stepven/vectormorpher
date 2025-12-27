@@ -2129,6 +2129,8 @@ const VectorMorphTool = () => {
               // If starting to play and there are saved shapes, show them on canvas
               if (willBePlaying && shapes.length >= 2) {
                 setShowSavedShapesOnCanvas(true);
+                // Make all shapes visible when playing animation
+                setShapeVisibility(shapes.map(() => true));
               }
             }}
             disabled={shapes.length < 2 || isRecording}
