@@ -1001,10 +1001,10 @@ const VectorMorphTool = () => {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 20px;
+      justify-content: center;
       width: 100%;
       height: 100%;
-      padding: 20px;
+      padding: 0;
       box-sizing: border-box;
     }
     
@@ -1013,22 +1013,6 @@ const VectorMorphTool = () => {
       background-color: ${backgroundColor === 'transparent' ? 'transparent' : backgroundColor};
       max-width: 100%;
       max-height: 100%;
-    }
-    
-    #playPauseBtn {
-      background-color:rgb(84, 59, 246);
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 12px;
-      font-size: 16px;
-      cursor: pointer;
-      transition: background-color 0.2s;
-      font-family: inherit;
-    }
-    
-    #playPauseBtn:hover {
-      background-color: rgb(87, 107, 238);
     }
     
     @media (max-width: 900px) {
@@ -1043,7 +1027,6 @@ const VectorMorphTool = () => {
   <!-- Copy this entire file and embed via iframe or paste directly into your site -->
   <div id="animation-container">
     <canvas id="morphCanvas"></canvas>
-    <button id="playPauseBtn">⏸ Pause</button>
   </div>
 
   <script>
@@ -1303,7 +1286,6 @@ const VectorMorphTool = () => {
     // Canvas setup
     const canvas = document.getElementById('morphCanvas');
     const ctx = canvas.getContext('2d');
-    const playPauseBtn = document.getElementById('playPauseBtn');
     const container = document.getElementById('animation-container');
     
     // Original design dimensions
@@ -1327,8 +1309,8 @@ const VectorMorphTool = () => {
       let displayHeight = displayWidth / aspectRatio;
       
       // If height is too large, constrain by height
-      if (displayHeight > containerHeight - 60) { // Leave space for button
-        displayHeight = containerHeight - 60;
+      if (displayHeight > containerHeight) {
+        displayHeight = containerHeight;
         displayWidth = displayHeight * aspectRatio;
       }
       
@@ -1372,16 +1354,18 @@ const VectorMorphTool = () => {
         startTime = timestamp;
       }
       
-      // Use display dimensions (accounting for DPR scaling already applied in context)
-      const centerX = canvas.width / (window.devicePixelRatio || 1) / 2;
-      const centerY = canvas.height / (window.devicePixelRatio || 1) / 2;
+      // Get display dimensions (not physical pixel dimensions)
+      const displayWidth = canvas.width / (window.devicePixelRatio || 1);
+      const displayHeight = canvas.height / (window.devicePixelRatio || 1);
+      const centerX = displayWidth / 2;
+      const centerY = displayHeight / 2;
     
-      // Use background color, or transparent
+      // Use background color, or transparent - use display dimensions
       if (animationData.backgroundColor === 'transparent') {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, displayWidth, displayHeight);
       } else {
         ctx.fillStyle = animationData.backgroundColor;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, displayWidth, displayHeight);
       }
       
       if (isPlaying && animationData.shapes.length > 1) {
@@ -1410,20 +1394,7 @@ const VectorMorphTool = () => {
       }
     }
     
-    // Play/Pause functionality
-    playPauseBtn.addEventListener('click', () => {
-      isPlaying = !isPlaying;
-      playPauseBtn.textContent = isPlaying ? '⏸ Pause' : '▶ Play';
-      
-      if (isPlaying) {
-        if (animationId === null) {
-          startTime = null;
-          animationId = requestAnimationFrame(animate);
-        }
-      }
-    });
-    
-    // Start animation
+    // Start animation (always playing)
     animationId = requestAnimationFrame(animate);
   </script>
 </body>
