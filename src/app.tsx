@@ -1355,18 +1355,28 @@ const VectorMorphTool = () => {
       }
       
       // Get display dimensions (not physical pixel dimensions)
-      const displayWidth = canvas.width / (window.devicePixelRatio || 1);
-      const displayHeight = canvas.height / (window.devicePixelRatio || 1);
+      const dpr = window.devicePixelRatio || 1;
+      const displayWidth = canvas.width / dpr;
+      const displayHeight = canvas.height / dpr;
       const centerX = displayWidth / 2;
       const centerY = displayHeight / 2;
     
-      // Use background color, or transparent - use display dimensions
+      // Save context state (which includes the DPR scale transform)
+      ctx.save();
+      
+      // Reset transform to identity for clearing/filling
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      
+      // Use background color, or transparent - use physical pixel dimensions for clearRect/fillRect
       if (animationData.backgroundColor === 'transparent') {
-        ctx.clearRect(0, 0, displayWidth, displayHeight);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
       } else {
         ctx.fillStyle = animationData.backgroundColor;
-        ctx.fillRect(0, 0, displayWidth, displayHeight);
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
+      
+      // Restore context state (restores DPR scale)
+      ctx.restore();
       
       if (isPlaying && animationData.shapes.length > 1) {
         const totalDuration = animationData.morphDuration * 1000 * animationData.shapes.length;
