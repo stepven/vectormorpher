@@ -1748,9 +1748,14 @@ const VectorMorphTool = () => {
     shape.points.forEach((point: any, idx: number) => {
       const isSelected = idx === selectedIdx;
       const isFirstPoint = idx === 0;
-      const showCloseIndicator = isFirstPoint && hoverFirstPoint && tool === 'pen' && shape.points.length >= 3 && !shape.isClosed;
+      const isClosed = shape.isClosed || false;
+      const showCloseIndicator = isFirstPoint && hoverFirstPoint && tool === 'pen' && shape.points.length >= 3 && !isClosed;
       
-      if (isSelected || tool === 'select') {
+      // Always show handles for selected points or in select mode
+      // Also always show first point's handleIn when shape is closed (it's used for closing curve)
+      const showHandles = isSelected || tool === 'select' || (isFirstPoint && isClosed);
+      
+      if (showHandles) {
         ctx.strokeStyle = '#00aaff';
         ctx.lineWidth = 1;
         ctx.beginPath();
@@ -1766,6 +1771,15 @@ const VectorMorphTool = () => {
         ctx.beginPath();
         ctx.arc(point.handleOut.x, point.handleOut.y, 5, 0, Math.PI * 2);
         ctx.fill();
+        
+        // Highlight first point's handleIn when shape is closed to show it's used for closing
+        if (isFirstPoint && isClosed) {
+          ctx.strokeStyle = '#00ff00';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(point.handleIn.x, point.handleIn.y, 7, 0, Math.PI * 2);
+          ctx.stroke();
+        }
       }
       
       // Highlight first point when hovering to close
