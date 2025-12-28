@@ -1011,8 +1011,8 @@ const VectorMorphTool = () => {
     #morphCanvas {
       display: block;
       background-color: ${backgroundColor === 'transparent' ? 'transparent' : backgroundColor};
-      width: 100%;
-      height: 100%;
+      max-width: 100%;
+      max-height: 100%;
       object-fit: contain;
     }
     
@@ -1331,13 +1331,19 @@ const VectorMorphTool = () => {
     function resizeCanvas() {
       if (!container) return;
       
-      // Get container dimensions - use full container size
+      // Get container dimensions
       const containerWidth = container.clientWidth || container.offsetWidth || 800;
       const containerHeight = container.clientHeight || container.offsetHeight || 500;
       
-      // Use full container dimensions for canvas
-      const displayWidth = containerWidth;
-      const displayHeight = containerHeight;
+      // Calculate canvas display size to fit container while maintaining aspect ratio
+      let displayWidth = containerWidth;
+      let displayHeight = displayWidth / aspectRatio;
+      
+      // If height is too large, constrain by height
+      if (displayHeight > containerHeight) {
+        displayHeight = containerHeight;
+        displayWidth = displayHeight * aspectRatio;
+      }
       
       // Get device pixel ratio for high-DPI displays (retina, etc)
       const dpr = window.devicePixelRatio || 1;
@@ -1346,15 +1352,13 @@ const VectorMorphTool = () => {
       canvas.width = displayWidth * dpr;
       canvas.height = displayHeight * dpr;
       
-      // Set canvas display size to fill container
+      // Set canvas display size (maintains aspect ratio)
       canvas.style.width = displayWidth + 'px';
       canvas.style.height = displayHeight + 'px';
       
-      // Calculate scale factors - scale to fit container while maintaining aspect ratio
-      const scaleX = displayWidth / DESIGN_WIDTH;
-      const scaleY = displayHeight / DESIGN_HEIGHT;
-      // Use the smaller scale to maintain aspect ratio and fit within container
-      currentScale = Math.min(scaleX, scaleY) * dpr;
+      // Calculate scale factor from design dimensions to actual render dimensions
+      // Use display width for consistent scaling
+      currentScale = (displayWidth * dpr) / DESIGN_WIDTH;
       
       // Scale context to account for device pixel ratio
       ctx.scale(dpr, dpr);
