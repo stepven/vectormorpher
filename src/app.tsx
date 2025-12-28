@@ -1356,12 +1356,15 @@ const VectorMorphTool = () => {
       canvas.style.width = displayWidth + 'px';
       canvas.style.height = displayHeight + 'px';
       
-      // Calculate scale factor from design dimensions to actual render dimensions
-      // Use display width for consistent scaling
-      currentScale = (displayWidth * dpr) / DESIGN_WIDTH;
+      // Reset context transform before applying new scale
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
       
       // Scale context to account for device pixel ratio
       ctx.scale(dpr, dpr);
+      
+      // Calculate scale factor from design dimensions to actual render dimensions
+      // Use display width (not including DPR since context is already scaled)
+      currentScale = displayWidth / DESIGN_WIDTH;
     }
     
     resizeCanvas();
