@@ -13,7 +13,7 @@ const VectorMorphTool = () => {
   const [currentShape, setCurrentShape] = useState({
     points: [] as any[],
     iterations: 30,
-    rotation: 5,
+    rotation: 2,
     scale: 0.97,
     opacity: 0.8,
     color: '#000000',
@@ -815,9 +815,22 @@ const VectorMorphTool = () => {
       return;
     }
     
+    // For video export, we need a solid background (video codecs don't support transparency)
+    // Temporarily use white or the last background color if current is transparent
+    const wasTransparent = backgroundColor === 'transparent';
+    const recordingBackgroundColor = wasTransparent ? (lastBackgroundColor || '#ffffff') : backgroundColor;
+    const originalBackgroundColor = backgroundColor;
+    
     try {
       // Calculate recording duration (one complete loop)
       const totalDuration = morphDuration * 1000 * shapes.length;
+      
+      // Temporarily set a solid background for recording
+      if (wasTransparent) {
+        setBackgroundColor(recordingBackgroundColor);
+        // Wait a frame for the state to update
+        await new Promise(resolve => requestAnimationFrame(resolve));
+      }
       
       // Ensure saved shapes are visible during recording
       const wasShowingShapes = showSavedShapesOnCanvas;
@@ -893,6 +906,9 @@ const VectorMorphTool = () => {
         setRecordingProgress(0);
         
         // Restore previous state
+        if (wasTransparent) {
+          setBackgroundColor(originalBackgroundColor);
+        }
         if (!wasShowingShapes) {
           setShowSavedShapesOnCanvas(false);
         }
@@ -910,6 +926,9 @@ const VectorMorphTool = () => {
         recordedChunksRef.current = [];
         
         // Restore previous state
+        if (wasTransparent) {
+          setBackgroundColor(originalBackgroundColor);
+        }
         if (!wasShowingShapes) {
           setShowSavedShapesOnCanvas(false);
         }
@@ -954,6 +973,11 @@ const VectorMorphTool = () => {
       setRecordingProgress(0);
       mediaRecorderRef.current = null;
       recordedChunksRef.current = [];
+      
+      // Restore background if it was changed
+      if (wasTransparent) {
+        setBackgroundColor(originalBackgroundColor);
+      }
     }
   };
   
@@ -2102,7 +2126,7 @@ const VectorMorphTool = () => {
                 <input
                   type="number"
                   min="1"
-                  max="100"
+                  max="200"
                   value={currentShape.iterations}
                   onChange={(e) => setCurrentShape({...currentShape, iterations: Math.min(100, Math.max(5, Number(e.target.value)))})}
                   className="w-15 bg-[#f5f5f5] px-1 py-0.5 rounded text-sm font-light text-right"
@@ -2111,7 +2135,7 @@ const VectorMorphTool = () => {
                 <input
                   type="range"
                 min="1"
-                  max="100"
+                  max="200"
                   value={currentShape.iterations}
                   onChange={(e) => setCurrentShape({...currentShape, iterations: Number(e.target.value)})}
                   className="w-full"
