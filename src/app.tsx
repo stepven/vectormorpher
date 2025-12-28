@@ -256,7 +256,7 @@ const VectorMorphTool = () => {
       ctx.beginPath();
       ctx.moveTo(p1x, p1y);
       ctx.lineTo(h2x, h2y);
-      ctx.stroke();
+        ctx.stroke();
       
       ctx.fillStyle = `rgba(${handleRgb.r}, ${handleRgb.g}, ${handleRgb.b}, 0.8)`;
       ctx.beginPath();
@@ -344,7 +344,7 @@ const VectorMorphTool = () => {
     if (distance({ x, y }, { x: p1x, y: p1y }) < 10) {
       setIsDraggingCurvePoint(1);
       setDraggingCurveHandle(null);
-    }
+      }
   };
   
   const handleCurveMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -1021,7 +1021,8 @@ const VectorMorphTool = () => {
     
     #morphCanvas {
       display: block;
-      background-color: ${backgroundColor === 'transparent' ? 'transparent' : backgroundColor};
+      background: ${backgroundColor === 'transparent' ? 'transparent' : backgroundColor} !important;
+      background-color: ${backgroundColor === 'transparent' ? 'transparent' : backgroundColor} !important;
       /* Size will be set by JavaScript to maximize fill while maintaining aspect ratio */
     }
     
@@ -1371,6 +1372,15 @@ const VectorMorphTool = () => {
       
       // Reset context transform before applying new scale
       ctx.setTransform(1, 0, 0, 1, 0, 0);
+      
+      // Clear canvas immediately after setting dimensions (before scaling)
+      // Use physical pixel dimensions since transform is reset
+      if (animationData.backgroundColor === 'transparent') {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      } else {
+        ctx.fillStyle = animationData.backgroundColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
       
       // Scale context to account for device pixel ratio
       ctx.scale(dpr, dpr);
@@ -1871,19 +1881,19 @@ const VectorMorphTool = () => {
           adjustedTimestamp = timestamp - recordingStartTimeRef.current;
         }
         const progress = (adjustedTimestamp % totalDuration) / totalDuration;
-        
+      
         const shapeIndex = Math.floor(progress * visibleShapes.length);
         const nextIndex = (shapeIndex + 1) % visibleShapes.length;
         const localProgress = (progress * visibleShapes.length) % 1;
-        const easedProgress = easingFunctions[easingCurve](localProgress);
-        
-        const interpolated = interpolateShape(
+      const easedProgress = easingFunctions[easingCurve](localProgress);
+      
+      const interpolated = interpolateShape(
           visibleShapes[shapeIndex],
           visibleShapes[nextIndex],
-          easedProgress
-        );
-        
-        drawShape(ctx, interpolated, centerX, centerY);
+        easedProgress
+      );
+      
+      drawShape(ctx, interpolated, centerX, centerY);
       } else {
         // When not playing, draw all visible shapes layered on top of each other
         visibleShapes.forEach(shape => {
@@ -1926,7 +1936,7 @@ const VectorMorphTool = () => {
     };
     return ratios[aspectRatio] || { width: 800, height: 500 };
   };
-
+  
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -2003,52 +2013,52 @@ const VectorMorphTool = () => {
       <h1 className="text-xs font-semibold text-[#161616]">VECTOR MORPH</h1>
       <p className="text-xs text-[#161616] font-light">Version 0.0.0</p>
     </div>
-    
+      
     <div className="flex gap-2 flex-1 min-h-0">
     {/* LEFT PANEL */}
     <div className="w-72 flex-shrink-0 overflow-y-auto space-y-1">
       {/* Tools */}
       <div className="bg-[#fafafa] p-2 rounded">
         <div className="flex gap-2 w-full">
-          <button
-            onClick={() => setTool('pen')}
+              <button
+                onClick={() => setTool('pen')}
             className={`flex-1 px-2 py-1.5 rounded flex items-center justify-center gap-1 text-sm border-2 ${
               tool === 'pen' 
                 ? 'bg-neutral-200 text-[#161616] border-neutral-200' 
                 : 'bg-[#fafafa] text-[#161616] border-neutral-200 hover:bg-neutral-200 hover:text-[#161616] hover:border-neutral-200'
-            }`}
-          >
+                }`}
+              >
             <Pencil size={14} /> Pen
-          </button>
-          <button
-            onClick={() => setTool('select')}
+              </button>
+              <button
+                onClick={() => setTool('select')}
             className={`flex-1 px-2 py-1.5 rounded flex items-center justify-center gap-1 text-sm border-2 ${
               tool === 'select' 
                 ? 'bg-neutral-200 text-[#161616] border-neutral-200' 
                 : 'bg-[#fafafa] text-[#161616] border-neutral-200 hover:bg-neutral-200 hover:text-[#161616] hover:border-neutral-200'
-            }`}
-          >
+                }`}
+              >
             <Move size={14} /> Select
-          </button>
-        </div>
+              </button>
+            </div>
         <p className="text-xs text-[#161616] mt-1">
           {tool === 'pen' ? 'Click to add anchor points with bezier handles' : 'Click and drag points or handles to adjust curves'}
         </p>
-      </div>
+            </div>
 
       {/* Iteration Parameters */}
       <div className="bg-white p-2 rounded">
-        <button
+              <button
           onClick={() => setShowIterationParams(!showIterationParams)}
           className="w-full flex justify-between items-center font-medium text-xs py-1 hover:text-[#161616]"
         >
           <span>ITERATION PARAMETERS</span>
           {showIterationParams ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </button>
+              </button>
         
         <div className={`overflow-hidden transition-all duration-200 ease-in-out ${showIterationParams ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
           <div className="space-y-1 pt-3">
-            <div>
+              <div>
               <div className="flex justify-between items-center mb-1">
                 <label className="block text-sm font-light">Iterations</label>
                 <input
@@ -2060,17 +2070,17 @@ const VectorMorphTool = () => {
                   className="w-15 bg-[#f5f5f5] px-1 py-0.5 rounded text-sm font-light text-right"
                 />
               </div>
-              <input
-                type="range"
+                <input
+                  type="range"
                 min="1"
-                max="100"
-                value={currentShape.iterations}
-                onChange={(e) => setCurrentShape({...currentShape, iterations: Number(e.target.value)})}
-                className="w-full"
-              />
-            </div>
-            
-            <div>
+                  max="100"
+                  value={currentShape.iterations}
+                  onChange={(e) => setCurrentShape({...currentShape, iterations: Number(e.target.value)})}
+                  className="w-full"
+                />
+              </div>
+              
+              <div>
               <div className="flex justify-between items-center mb-1">
                 <label className="block text-sm font-light">Rotation</label>
                 <div className="flex items-center gap-1">
@@ -2086,18 +2096,18 @@ const VectorMorphTool = () => {
                   <span className="text-xs text-[#161616]">°</span>
                 </div>
               </div>
-              <input
-                type="range"
+                <input
+                  type="range"
                 min="-25"
                 max="25"
-                step="0.5"
-                value={currentShape.rotation}
-                onChange={(e) => setCurrentShape({...currentShape, rotation: Number(e.target.value)})}
-                className="w-full"
-              />
-            </div>
-            
-            <div>
+                  step="0.5"
+                  value={currentShape.rotation}
+                  onChange={(e) => setCurrentShape({...currentShape, rotation: Number(e.target.value)})}
+                  className="w-full"
+                />
+              </div>
+              
+              <div>
               <div className="flex justify-between items-center mb-1">
                 <label className="block text-sm font-light">Scale</label>
                 <input
@@ -2110,18 +2120,18 @@ const VectorMorphTool = () => {
                   className="w-15 bg-[#f5f5f5] px-1 py-0.5 rounded text-sm font-light text-right"
                 />
               </div>
-              <input
-                type="range"
+                <input
+                  type="range"
                 min="0.8"
                 max="1.2"
-                step="0.001"
-                value={currentShape.scale}
-                onChange={(e) => setCurrentShape({...currentShape, scale: Number(e.target.value)})}
-                className="w-full"
-              />
-            </div>
-            
-            <div>
+                  step="0.001"
+                  value={currentShape.scale}
+                  onChange={(e) => setCurrentShape({...currentShape, scale: Number(e.target.value)})}
+                  className="w-full"
+                />
+              </div>
+              
+              <div>
               <div className="flex justify-between items-center mb-1">
                 <label className="block text-sm font-light">Opacity</label>
                 <input
@@ -2134,20 +2144,20 @@ const VectorMorphTool = () => {
                   className="w-15 bg-[#f5f5f5] px-1 py-0.5 rounded text-sm font-light text-right"
                 />
               </div>
-              <input
-                type="range"
+                <input
+                  type="range"
                 min="0"
-                max="1"
-                step="0.05"
-                value={currentShape.opacity}
-                onChange={(e) => setCurrentShape({...currentShape, opacity: Number(e.target.value)})}
-                className="w-full"
-              />
+                  max="1"
+                  step="0.05"
+                  value={currentShape.opacity}
+                  onChange={(e) => setCurrentShape({...currentShape, opacity: Number(e.target.value)})}
+                  className="w-full"
+                />
             </div>
           </div>
         </div>
-      </div>
-
+              </div>
+              
       {/* Canvas Parameters */}
       <div className="bg-white p-2 rounded">
         <button
@@ -2160,7 +2170,7 @@ const VectorMorphTool = () => {
         
         <div className={`overflow-hidden transition-all duration-200 ease-in-out ${showCanvasParams ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
           <div className="space-y-1 pt-3">
-            <div>
+              <div>
               <label className="block text-sm font-light mb-1">Aspect Ratio</label>
               <select
                 value={aspectRatio}
@@ -2225,15 +2235,15 @@ const VectorMorphTool = () => {
           <div className="space-y-1 pt-3">
             <div>
               <label className="block text-sm font-light mb-1">Stroke Color</label>
-              <input
-                type="color"
-                value={currentShape.color}
-                onChange={(e) => setCurrentShape({...currentShape, color: e.target.value})}
+                <input
+                  type="color"
+                  value={currentShape.color}
+                  onChange={(e) => setCurrentShape({...currentShape, color: e.target.value})}
                 className="w-full h-6 rounded"
-              />
-            </div>
-            
-            <div>
+                />
+              </div>
+              
+              <div>
               <div className="flex justify-between items-center mb-1">
                 <label className="block text-sm font-light">Start Width</label>
                 <input
@@ -2246,18 +2256,18 @@ const VectorMorphTool = () => {
                   className="w-15 bg-[#f5f5f5] px-1 py-0.5 rounded text-sm font-light text-right"
                 />
               </div>
-              <input
-                type="range"
+                <input
+                  type="range"
                 min="0.1"
-                max="10"
+                  max="10"
                 step="0.1"
-                value={currentShape.startWidth}
-                onChange={(e) => setCurrentShape({...currentShape, startWidth: Number(e.target.value)})}
-                className="w-full"
-              />
-            </div>
-            
-            <div>
+                  value={currentShape.startWidth}
+                  onChange={(e) => setCurrentShape({...currentShape, startWidth: Number(e.target.value)})}
+                  className="w-full"
+                />
+              </div>
+              
+              <div>
               <div className="flex justify-between items-center mb-1">
                 <label className="block text-sm font-light">End Width</label>
                 <input
@@ -2270,16 +2280,16 @@ const VectorMorphTool = () => {
                   className="w-15 bg-[#f5f5f5] px-1 py-0.5 rounded text-sm font-light text-right"
                 />
               </div>
-              <input
-                type="range"
-                min="0.1"
-                max="10"
+                <input
+                  type="range"
+                  min="0.1"
+                  max="10"
                 step="0.1"
-                value={currentShape.endWidth}
-                onChange={(e) => setCurrentShape({...currentShape, endWidth: Number(e.target.value)})}
-                className="w-full"
-              />
-            </div>
+                  value={currentShape.endWidth}
+                  onChange={(e) => setCurrentShape({...currentShape, endWidth: Number(e.target.value)})}
+                  className="w-full"
+                />
+              </div>
             
             <div>
               <div className="flex justify-between items-center mb-1">
@@ -2296,7 +2306,7 @@ const VectorMorphTool = () => {
                   })}
                   className="w-15 bg-[#f5f5f5] px-1 py-0.5 rounded text-sm font-light text-right"
                 />
-              </div>
+            </div>
               <input
                 type="range"
                 min="0"
@@ -2309,7 +2319,7 @@ const VectorMorphTool = () => {
                 })}
                 className="w-full"
               />
-            </div>
+          </div>
             
             <div>
               <div className="flex justify-between items-center mb-1">
@@ -2339,8 +2349,8 @@ const VectorMorphTool = () => {
                 })}
                 className="w-full"
               />
-            </div>
-            
+        </div>
+        
             <div>
               <div className="flex justify-between items-center mb-1">
                 <label className="block text-sm font-light">Uniformity</label>
@@ -2386,7 +2396,7 @@ const VectorMorphTool = () => {
         
         <div className={`overflow-hidden transition-all duration-200 ease-in-out ${showAnimationParams ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
           <div className="space-y-1 pt-3">
-          <div>
+              <div>
             <div className="flex justify-between items-center mb-1">
               <label className="block text-sm font-light">Morph Duration</label>
               <div className="flex items-center gap-1">
@@ -2402,51 +2412,51 @@ const VectorMorphTool = () => {
                 <span className="text-xs text-[#161616]">s</span>
               </div>
             </div>
-            <input
-              type="range"
-              min="0.5"
-              max="10"
-              step="0.5"
-              value={morphDuration}
-              onChange={(e) => setMorphDuration(Number(e.target.value))}
-              className="w-full"
-            />
-          </div>
-          
-          <div>
+                <input
+                  type="range"
+                  min="0.5"
+                  max="10"
+                  step="0.5"
+                  value={morphDuration}
+                  onChange={(e) => setMorphDuration(Number(e.target.value))}
+                  className="w-full"
+                />
+              </div>
+              
+              <div>
             <label className="block text-sm font-light mb-1 ">Easing Curve</label>
-            <select
-              value={easingCurve}
-              onChange={(e) => setEasingCurve(e.target.value)}
+                <select
+                  value={easingCurve}
+                  onChange={(e) => setEasingCurve(e.target.value)}
               className="w-full bg-[#f5f5f5] px-2 py-1.5 pr-2 rounded font-light"
-            >
-              <option value="linear">Linear</option>
-              <option value="easeIn">Ease In</option>
-              <option value="easeOut">Ease Out</option>
-              <option value="easeInOut">Ease In Out</option>
-              <option value="bounce">Bounce</option>
-              <option value="custom">Custom Curve</option>
-            </select>
-          </div>
-          
-          {easingCurve === 'custom' && (
+                >
+                  <option value="linear">Linear</option>
+                  <option value="easeIn">Ease In</option>
+                  <option value="easeOut">Ease Out</option>
+                  <option value="easeInOut">Ease In Out</option>
+                  <option value="bounce">Bounce</option>
+                  <option value="custom">Custom Curve</option>
+                </select>
+              </div>
+              
+              {easingCurve === 'custom' && (
             <div className="bg-[#f5f5f5] p-3 rounded">
               <label className="block text-sm font-light mb-2">Custom Interpolation Graph</label>
-              <canvas
-                ref={curveCanvasRef}
-                width={300}
-                height={200}
+                  <canvas
+                    ref={curveCanvasRef}
+                    width={300}
+                    height={200}
                 className="w-full border border-#f5f5f5 cursor-pointer rounded"
-                onMouseDown={handleCurveMouseDown}
-                onMouseMove={handleCurveMouseMove}
-                onMouseUp={handleCurveMouseUp}
-                onMouseLeave={handleCurveMouseUp}
-              />
+                    onMouseDown={handleCurveMouseDown}
+                    onMouseMove={handleCurveMouseMove}
+                    onMouseUp={handleCurveMouseUp}
+                    onMouseLeave={handleCurveMouseUp}
+                  />
               <p className="text-xs text-[#161616] mt-2">
-                Drag the control points to customize the animation curve
-              </p>
-            </div>
-          )}
+                    Drag the control points to customize the animation curve
+                  </p>
+                </div>
+              )}
           </div>
         </div>
       </div>
@@ -2460,7 +2470,7 @@ const VectorMorphTool = () => {
               Create at least 2 shapes to animate
             </p>
           )}
-          <button
+              <button
             onClick={() => {
               const willBePlaying = !isPlaying;
               setIsPlaying(willBePlaying);
@@ -2476,13 +2486,13 @@ const VectorMorphTool = () => {
               shapes.length < 2 || isRecording
                 ? 'bg-transparent border-2 border-neutral-200 text-[#161616] cursor-not-allowed' 
                 : 'bg-indigo-700 text-white hover:bg-indigo-800'
-            }`}
-          >
-            {isPlaying ? <Pause size={20} /> : <Play size={20} />}
-            {isPlaying ? 'Pause' : 'Play'} Animation
-          </button>
-          
-        </div>
+                }`}
+              >
+                {isPlaying ? <Pause size={20} /> : <Play size={20} />}
+                {isPlaying ? 'Pause' : 'Play'} Animation
+              </button>
+              
+            </div>
 
         {/* Export Buttons */}
         <div>
@@ -2525,7 +2535,7 @@ const VectorMorphTool = () => {
         </div>
 
         {/* Undo/Redo */}
-        <div>
+                  <div>
           <div className="flex gap-2">
             <button
               onClick={undo}
@@ -2549,8 +2559,8 @@ const VectorMorphTool = () => {
             >
               ↷ Redo
             </button>
-          </div>
-        </div>
+                    </div>
+                  </div>
       </div>
     </div>
 
@@ -2571,10 +2581,10 @@ const VectorMorphTool = () => {
       {/* Save Shape + Clear */}
       <div className="bg-[#f5f5f5] p-1 rounded flex-shrink-0">
         <div className="flex gap-2">
-          <button
+                  <button
             onClick={saveShape}
             className="flex-1 bg-indigo-700 text-white hover:bg-indigo-800 px-3 py-1.5 rounded flex items-center justify-center gap-2 text-sm"
-          >
+                  >
             <Plus size={18} /> Save Shape
           </button>
           <button
@@ -2582,8 +2592,8 @@ const VectorMorphTool = () => {
             className="text-[#161616] border-2 border-neutral-200 hover:bg-neutral-200 hover:text-[#161616] px-3 py-1.5 rounded text-sm"
           >
             Clear
-          </button>
-        </div>
+                  </button>
+                </div>
       </div>
 
       {/* Saved Shapes Horizontal Carousel - fixed height, always visible */}
@@ -2593,8 +2603,8 @@ const VectorMorphTool = () => {
         <div className="flex gap-1 overflow-x-auto h-40 pb-2">
           {shapes.length === 0 ? (
             <p className="text-[#161616] text-center py-8 w-full">
-              No shapes saved yet. Draw on the canvas and click "Save Shape"
-            </p>
+                  No shapes saved yet. Draw on the canvas and click "Save Shape"
+                </p>
           ) : (
             shapes.map((shape, index) => (
               <div 
@@ -2645,9 +2655,9 @@ const VectorMorphTool = () => {
                       >
                         <Trash2 size={12} />
                       </button>
-                    </div>
-                  </div>
-                  
+            </div>
+          </div>
+          
                   <span className="text-xs text-[#161616]">
                     {shape.points.length} pts
                   </span>
@@ -2678,12 +2688,12 @@ const VectorMorphTool = () => {
                   
                   <div className="text-xs text-[#161616]">
                     I: {shape.iterations} • R: {shape.rotation}° • S: {shape.scale.toFixed(2)}
-                  </div>
-                </div>
-              </div>
+          </div>
+        </div>
+      </div>
             ))
           )}
-        </div>
+    </div>
       </div>
     </div>
   </div>
