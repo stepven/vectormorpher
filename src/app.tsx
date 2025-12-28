@@ -1362,12 +1362,9 @@ const VectorMorphTool = () => {
       // Scale context to account for device pixel ratio
       ctx.scale(dpr, dpr);
       
-      // Calculate uniform scale factor to ensure vectors scale proportionally
-      // Use the smaller of width/height ratios to maintain aspect ratio and fit properly
-      const scaleX = displayWidth / DESIGN_WIDTH;
-      const scaleY = displayHeight / DESIGN_HEIGHT;
-      // Use uniform scale (smaller value) to ensure everything scales together proportionally
-      currentScale = Math.min(scaleX, scaleY);
+      // Calculate scale factor - since canvas maintains aspect ratio, use width for uniform scaling
+      // This ensures vectors scale proportionally with the canvas size
+      currentScale = displayWidth / DESIGN_WIDTH;
     }
     
     resizeCanvas();
