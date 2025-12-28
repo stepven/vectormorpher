@@ -456,6 +456,7 @@ const VectorMorphTool = () => {
         }
       }
       
+      // Create new point with curve handles
       const newPoint = {
         x,
         y,
@@ -466,9 +467,11 @@ const VectorMorphTool = () => {
       const newIndex = currentShape.points.length;
       const newPoints = [...currentShape.points, newPoint];
       
+      // If shape was closed, reopen it when adding a new point
       setCurrentShape(prev => ({
         ...prev,
-        points: newPoints
+        points: newPoints,
+        isClosed: false // Reopen shape when adding new points
       }));
       setSelectedPoint(newIndex);
       setIsDraggingNewPoint(true);
