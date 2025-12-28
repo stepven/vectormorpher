@@ -1326,8 +1326,13 @@ const VectorMorphTool = () => {
     
     // Canvas setup
     const canvas = document.getElementById('morphCanvas');
-    const ctx = canvas.getContext('2d');
+    // Get context with alpha channel explicitly enabled for transparency
+    const ctx = canvas.getContext('2d', { alpha: true });
     const container = document.getElementById('animation-container');
+    
+    // Clear canvas immediately after getting context (before any dimensions are set)
+    // This ensures the canvas starts transparent
+    ctx.clearRect(0, 0, canvas.width || 1, canvas.height || 1);
     
     // Original design dimensions
     const DESIGN_WIDTH = 800;
@@ -1362,6 +1367,9 @@ const VectorMorphTool = () => {
       // Get device pixel ratio for high-DPI displays (retina, etc)
       const dpr = window.devicePixelRatio || 1;
       
+      // Reset context transform before setting dimensions
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      
       // Set canvas internal resolution at device pixel ratio for crisp rendering
       canvas.width = displayWidth * dpr;
       canvas.height = displayHeight * dpr;
@@ -1370,10 +1378,7 @@ const VectorMorphTool = () => {
       canvas.style.width = displayWidth + 'px';
       canvas.style.height = displayHeight + 'px';
       
-      // Reset context transform before applying new scale
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      
-      // Clear canvas immediately after setting dimensions (before scaling)
+      // Clear/fill canvas immediately after setting dimensions (before scaling)
       // Use physical pixel dimensions since transform is reset
       if (animationData.backgroundColor === 'transparent') {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
