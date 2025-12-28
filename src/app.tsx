@@ -21,7 +21,8 @@ const VectorMorphTool = () => {
     endWidth: 0.5,
     displacementAmount: 0,
     iterationDistortion: 0,
-    uniformity: 0.5
+    uniformity: 0.5,
+    isClosed: false
   });
   
   const [selectedPoint, setSelectedPoint] = useState<number | null>(null);
@@ -32,6 +33,7 @@ const VectorMorphTool = () => {
   const [tool, setTool] = useState('pen');
   const [isDraggingNewPoint, setIsDraggingNewPoint] = useState(false);
   const [newPointIndex, setNewPointIndex] = useState<number | null>(null);
+  const [isHoveringFirstPoint, setIsHoveringFirstPoint] = useState(false);
   const [customCurve, setCustomCurve] = useState<Array<{
     x: number;
     y: number;
@@ -438,6 +440,22 @@ const VectorMorphTool = () => {
     const y = ((e.clientY - rect.top - offsetY) / displayHeight) * dimensions.height;
     
     if (tool === 'pen') {
+      // Check if clicking near the first point to close the shape
+      if (currentShape.points.length >= 3 && !currentShape.isClosed) {
+        const firstPoint = currentShape.points[0];
+        const distToFirst = distance({ x, y }, firstPoint);
+        
+        // If within 30 pixels of first point, close the shape
+        if (distToFirst < 30) {
+          setCurrentShape(prev => ({
+            ...prev,
+            isClosed: true
+          }));
+          saveToHistory(currentShape.points);
+          return;
+        }
+      }
+      
       const newPoint = {
         x,
         y,
@@ -510,6 +528,15 @@ const VectorMorphTool = () => {
     // Mouse coordinates in the logical coordinate system
     const x = ((e.clientX - rect.left - offsetX) / displayWidth) * dimensions.width;
     const y = ((e.clientY - rect.top - offsetY) / displayHeight) * dimensions.height;
+    
+    // Check if hovering near first point to show close indicator
+    if (tool === 'pen' && !isDraggingNewPoint && currentShape.points.length >= 3 && !currentShape.isClosed) {
+      const firstPoint = currentShape.points[0];
+      const distToFirst = distance({ x, y }, firstPoint);
+      setIsHoveringFirstPoint(distToFirst < 30);
+    } else {
+      setIsHoveringFirstPoint(false);
+    }
     
     if (tool === 'pen' && isDraggingNewPoint && newPointIndex !== null) {
       setCurrentShape(prev => {
@@ -637,7 +664,8 @@ const VectorMorphTool = () => {
     setShapeVisibility([...shapeVisibility, true]); // New shapes are visible by default
     setCurrentShape({
       ...currentShape,
-      points: []
+      points: [],
+      isClosed: false
     });
     setSelectedPoint(null);
     setHistory([]);
@@ -647,7 +675,7 @@ const VectorMorphTool = () => {
   
   const clearCurrentPath = () => {
     const emptyPoints: any[] = [];
-    setCurrentShape({ ...currentShape, points: emptyPoints });
+    setCurrentShape({ ...currentShape, points: emptyPoints, isClosed: false });
     setSelectedPoint(null);
     setHistory([]);
     setHistoryIndex(-1);
@@ -700,7 +728,8 @@ const VectorMorphTool = () => {
       endWidth: shapeToEdit.endWidth,
       displacementAmount: shapeToEdit.displacementAmount || shapeToEdit.distortion || 0,
       iterationDistortion: shapeToEdit.iterationDistortion || 0,
-      uniformity: shapeToEdit.uniformity !== undefined ? shapeToEdit.uniformity : 0.5
+      uniformity: shapeToEdit.uniformity !== undefined ? shapeToEdit.uniformity : 0.5,
+      isClosed: shapeToEdit.isClosed || false
     });
     
     // Remove the shape from saved shapes (user can save it again after editing)
@@ -1090,7 +1119,7 @@ const VectorMorphTool = () => {
       };
     }
     
-    function drawBezierPath(ctx, points) {
+    function drawBezierPath(ctx, points, isClosed) {
       if (points.length < 2) return;
       
       ctx.beginPath();
@@ -1104,6 +1133,18 @@ const VectorMorphTool = () => {
           p0.handleOut.x, p0.handleOut.y,
           p1.handleIn.x, p1.handleIn.y,
           p1.x, p1.y
+        );
+      }
+      
+      // Close the path if shape is closed
+      if (isClosed && points.length >= 3) {
+        const lastPoint = points[points.length - 1];
+        const firstPoint = points[0];
+        
+        ctx.bezierCurveTo(
+          lastPoint.handleOut.x, lastPoint.handleOut.y,
+          firstPoint.handleIn.x, firstPoint.handleIn.y,
+          firstPoint.x, firstPoint.y
         );
       }
       
@@ -1193,7 +1234,7 @@ const VectorMorphTool = () => {
         }
         
         // Draw the distorted (or original) points
-        drawBezierPath(ctx, pointsToDraw);
+        drawBezierPath(ctx, pointsToDraw, shape.isClosed || false);
         
         ctx.rotate((shape.rotation * Math.PI) / 180);
         ctx.scale(shape.scale, shape.scale);
@@ -1499,12 +1540,13 @@ const VectorMorphTool = () => {
         t
       ),
       iterationDistortion: lerp(shape1.iterationDistortion || 0, shape2.iterationDistortion || 0, t),
-      uniformity: lerp(shape1.uniformity !== undefined ? shape1.uniformity : 0.5, shape2.uniformity !== undefined ? shape2.uniformity : 0.5, t)
+      uniformity: lerp(shape1.uniformity !== undefined ? shape1.uniformity : 0.5, shape2.uniformity !== undefined ? shape2.uniformity : 0.5, t),
+      isClosed: shape1.isClosed || shape2.isClosed // If either shape is closed, interpolated shape is closed
     };
   };
   // CONTINUATION FROM PART 1
   
-  const drawBezierPath = (ctx: CanvasRenderingContext2D, points: any[]) => {
+  const drawBezierPath = (ctx: CanvasRenderingContext2D, points: any[], isClosed: boolean = false) => {
     if (points.length < 2) return;
     
     ctx.beginPath();
@@ -1518,6 +1560,18 @@ const VectorMorphTool = () => {
         p0.handleOut.x, p0.handleOut.y,
         p1.handleIn.x, p1.handleIn.y,
         p1.x, p1.y
+      );
+    }
+    
+    // Close the path if shape is closed
+    if (isClosed && points.length >= 3) {
+      const lastPoint = points[points.length - 1];
+      const firstPoint = points[0];
+      
+      ctx.bezierCurveTo(
+        lastPoint.handleOut.x, lastPoint.handleOut.y,
+        firstPoint.handleIn.x, firstPoint.handleIn.y,
+        firstPoint.x, firstPoint.y
       );
     }
     
@@ -1600,7 +1654,7 @@ const VectorMorphTool = () => {
       }
       
       // Draw the distorted (or original) points
-      drawBezierPath(ctx, pointsToDraw);
+      drawBezierPath(ctx, pointsToDraw, shape.isClosed || false);
       
       ctx.rotate((shape.rotation * Math.PI) / 180);
       ctx.scale(shape.scale, shape.scale);
@@ -1673,7 +1727,7 @@ const VectorMorphTool = () => {
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       
-      drawBezierPath(ctx, shape.points);
+      drawBezierPath(ctx, shape.points, shape.isClosed || false);
       
       ctx.rotate(((shape.rotation || 5) * Math.PI) / 180);
       ctx.scale(shape.scale || 0.97, shape.scale || 0.97);
@@ -1682,17 +1736,19 @@ const VectorMorphTool = () => {
     ctx.restore();
   };
   
-  const drawEditor = (ctx: CanvasRenderingContext2D, shape: any, selectedIdx: number | null) => {
+  const drawEditor = (ctx: CanvasRenderingContext2D, shape: any, selectedIdx: number | null, hoverFirstPoint: boolean = false) => {
     if (shape.points.length === 0) return;
     
     ctx.strokeStyle = '#333333';
     ctx.lineWidth = 2;
     ctx.setLineDash([5, 5]);
-    drawBezierPath(ctx, shape.points);
+    drawBezierPath(ctx, shape.points, shape.isClosed || false);
     ctx.setLineDash([]);
     
     shape.points.forEach((point: any, idx: number) => {
       const isSelected = idx === selectedIdx;
+      const isFirstPoint = idx === 0;
+      const showCloseIndicator = isFirstPoint && hoverFirstPoint && tool === 'pen' && shape.points.length >= 3 && !shape.isClosed;
       
       if (isSelected || tool === 'select') {
         ctx.strokeStyle = '#00aaff';
@@ -1710,6 +1766,15 @@ const VectorMorphTool = () => {
         ctx.beginPath();
         ctx.arc(point.handleOut.x, point.handleOut.y, 5, 0, Math.PI * 2);
         ctx.fill();
+      }
+      
+      // Highlight first point when hovering to close
+      if (showCloseIndicator) {
+        ctx.strokeStyle = '#00ff00';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, 8, 0, Math.PI * 2);
+        ctx.stroke();
       }
       
       ctx.fillStyle = isSelected ? '#333333' : '#dadada';
@@ -1786,7 +1851,7 @@ const VectorMorphTool = () => {
       // Draw the shape with all its parameters (iterations, rotation, etc.)
       drawShape(ctx, currentShape, centerX, centerY);
       // Then overlay the editor view (handles, points, etc.)
-      drawEditor(ctx, currentShape, selectedPoint);
+      drawEditor(ctx, currentShape, selectedPoint, isHoveringFirstPoint);
     }
     
     animationRef.current = requestAnimationFrame(animate);
