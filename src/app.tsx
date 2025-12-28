@@ -992,7 +992,8 @@ const VectorMorphTool = () => {
       height: 100%;
       margin: 0;
       padding: 0;
-      background-color: transparent;
+      background: transparent !important;
+      background-color: transparent !important;
     }
     
     body {
@@ -1001,7 +1002,8 @@ const VectorMorphTool = () => {
       margin: 0;
       padding: 0;
       overflow: hidden;
-      background-color: transparent;
+      background: transparent !important;
+      background-color: transparent !important;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -1017,13 +1019,16 @@ const VectorMorphTool = () => {
       height: 100%;
       padding: 0;
       box-sizing: border-box;
-      background-color: transparent;
+      background: transparent !important;
+      background-color: transparent !important;
     }
     
     #morphCanvas {
       display: block;
       background: transparent !important;
       background-color: transparent !important;
+      border: none !important;
+      outline: none !important;
       /* Size will be set by JavaScript to maximize fill while maintaining aspect ratio */
     }
     
@@ -1328,12 +1333,19 @@ const VectorMorphTool = () => {
     // Canvas setup
     const canvas = document.getElementById('morphCanvas');
     // Get context with alpha channel explicitly enabled for transparency
-    const ctx = canvas.getContext('2d', { alpha: true });
+    const ctx = canvas.getContext('2d', { alpha: true, desynchronized: false });
     const container = document.getElementById('animation-container');
+    
+    // Ensure canvas element itself has no background
+    canvas.style.backgroundColor = 'transparent';
+    canvas.style.background = 'transparent';
     
     // Clear canvas immediately after getting context (before any dimensions are set)
     // This ensures the canvas starts transparent
     ctx.clearRect(0, 0, canvas.width || 1, canvas.height || 1);
+    
+    // Set global composite operation to ensure we don't accidentally fill
+    ctx.globalCompositeOperation = 'source-over';
     
     // Original design dimensions
     const DESIGN_WIDTH = 800;
@@ -1372,6 +1384,7 @@ const VectorMorphTool = () => {
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       
       // Set canvas internal resolution at device pixel ratio for crisp rendering
+      // Setting width/height automatically clears the canvas, but we'll clear it explicitly too
       canvas.width = displayWidth * dpr;
       canvas.height = displayHeight * dpr;
       
@@ -1379,7 +1392,11 @@ const VectorMorphTool = () => {
       canvas.style.width = displayWidth + 'px';
       canvas.style.height = displayHeight + 'px';
       
-      // Clear canvas immediately after setting dimensions (before scaling)
+      // Ensure canvas element has transparent background
+      canvas.style.backgroundColor = 'transparent';
+      canvas.style.background = 'transparent';
+      
+      // Clear canvas explicitly after setting dimensions (before scaling)
       // Embeds always use transparent background
       // Use physical pixel dimensions since transform is reset
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1429,6 +1446,8 @@ const VectorMorphTool = () => {
       
       // Always clear canvas (embeds always use transparent background)
       // Use physical pixel dimensions for clearRect
+      // Clear multiple times to ensure no artifacts remain
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
       // Restore context state (restores DPR scale)
@@ -1459,6 +1478,12 @@ const VectorMorphTool = () => {
         animationId = requestAnimationFrame(animate);
       }
     }
+    
+    // Clear canvas one final time before starting animation
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
     
     // Start animation (always playing)
     animationId = requestAnimationFrame(animate);
