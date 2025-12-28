@@ -986,14 +986,19 @@ const VectorMorphTool = () => {
       box-sizing: border-box;
     }
     
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    
     body {
       background-color: ${backgroundColor === 'transparent' ? 'transparent' : backgroundColor};
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     }
     
@@ -1011,9 +1016,7 @@ const VectorMorphTool = () => {
     #morphCanvas {
       display: block;
       background-color: ${backgroundColor === 'transparent' ? 'transparent' : backgroundColor};
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
+      /* Size will be set by JavaScript to maximize fill while maintaining aspect ratio */
     }
     
     @media (max-width: 900px) {
@@ -1335,15 +1338,19 @@ const VectorMorphTool = () => {
       const containerWidth = container.clientWidth || container.offsetWidth || 800;
       const containerHeight = container.clientHeight || container.offsetHeight || 500;
       
-      // Calculate canvas display size to fit container while maintaining aspect ratio
+      // Calculate canvas display size to fill container while maintaining aspect ratio
+      // Try width-first approach
       let displayWidth = containerWidth;
       let displayHeight = displayWidth / aspectRatio;
       
-      // If height is too large, constrain by height
+      // If height exceeds container, use height-first approach to maximize size
       if (displayHeight > containerHeight) {
         displayHeight = containerHeight;
         displayWidth = displayHeight * aspectRatio;
       }
+      
+      // Ensure we're using the maximum possible size that fits
+      // This ensures the canvas fills as much of the container as possible
       
       // Get device pixel ratio for high-DPI displays (retina, etc)
       const dpr = window.devicePixelRatio || 1;
