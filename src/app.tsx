@@ -1079,6 +1079,28 @@ const VectorMorphTool = () => {
       };
     }
     
+    // Flow field that creates directional, flowing distortion
+    function flowField(x, y, time, scale) {
+      // Create flowing directional field using sine waves
+      const angleX = Math.sin(x * 0.01 + time * 0.3) * Math.cos(y * 0.008);
+      const angleY = Math.cos(x * 0.008 + time * 0.2) * Math.sin(y * 0.01);
+      
+      // Combine multiple frequencies for complexity
+      const angle = angleX + angleY + 
+                    Math.sin(x * 0.005 + y * 0.005 + time * 0.5) * 0.5;
+      
+      return {
+        x: Math.cos(angle) * scale,
+        y: Math.sin(angle) * scale
+      };
+    }
+    
+    // Seeded random for consistent but varied distortion per iteration
+    function seededRandom(seed) {
+      const x = Math.sin(seed) * 10000;
+      return x - Math.floor(x);
+    }
+    
     function interpolateShape(shape1, shape2, t) {
       const maxPoints = Math.max(shape1.points.length, shape2.points.length);
       const points1 = [...shape1.points];
@@ -1101,7 +1123,15 @@ const VectorMorphTool = () => {
         opacity: lerp(shape1.opacity, shape2.opacity, t),
         color: lerpColor(shape1.color, shape2.color, t),
         startWidth: lerp(shape1.startWidth, shape2.startWidth, t),
-        endWidth: lerp(shape1.endWidth, shape2.endWidth, t)
+        endWidth: lerp(shape1.endWidth, shape2.endWidth, t),
+        displacementAmount: lerp(
+          shape1.displacementAmount !== undefined ? shape1.displacementAmount : (shape1.distortion || 0),
+          shape2.displacementAmount !== undefined ? shape2.displacementAmount : (shape2.distortion || 0),
+          t
+        ),
+        iterationDistortion: lerp(shape1.iterationDistortion || 0, shape2.iterationDistortion || 0, t),
+        uniformity: lerp(shape1.uniformity !== undefined ? shape1.uniformity : 0.5, shape2.uniformity !== undefined ? shape2.uniformity : 0.5, t),
+        isClosed: shape1.isClosed || shape2.isClosed
       };
     }
     
@@ -1186,7 +1216,7 @@ const VectorMorphTool = () => {
           // Iteration distortion controls time-based variation
           const time = i * 0.1 * (1 + iterationDistortion * 0.5); // More variation with higher iterationDistortion
           
-          pointsToDraw = adjustedPoints.map((point: any) => {
+          pointsToDraw = adjustedPoints.map((point) => {
             // Sample flow field at point position with random variation
             const flow = flowField(point.x, point.y, time, randomScale * 30 * scale);
             
