@@ -1023,6 +1023,11 @@ const VectorMorphTool = () => {
       background-color: transparent !important;
     }
     
+    canvas {
+      background: transparent !important;
+      background-color: transparent !important;
+    }
+    
     #morphCanvas {
       display: block;
       background: transparent !important;
@@ -1043,7 +1048,7 @@ const VectorMorphTool = () => {
 <body>
   <!-- Copy this entire file and embed via iframe or paste directly into your site -->
   <div id="animation-container">
-    <canvas id="morphCanvas"></canvas>
+    <canvas id="morphCanvas" style="background: transparent !important; background-color: transparent !important; display: block;"></canvas>
   </div>
 
   <script>
@@ -1336,13 +1341,20 @@ const VectorMorphTool = () => {
     const ctx = canvas.getContext('2d', { alpha: true, desynchronized: false });
     const container = document.getElementById('animation-container');
     
-    // Ensure canvas element itself has no background
+    // Ensure canvas element itself has no background - set multiple times to override any defaults
     canvas.style.backgroundColor = 'transparent';
     canvas.style.background = 'transparent';
+    canvas.setAttribute('style', 'background: transparent !important; background-color: transparent !important; display: block;');
+    
+    // Set image rendering to ensure crisp rendering
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
     
     // Clear canvas immediately after getting context (before any dimensions are set)
     // This ensures the canvas starts transparent
-    ctx.clearRect(0, 0, canvas.width || 1, canvas.height || 1);
+    if (canvas.width > 0 && canvas.height > 0) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
     
     // Set global composite operation to ensure we don't accidentally fill
     ctx.globalCompositeOperation = 'source-over';
@@ -1392,13 +1404,16 @@ const VectorMorphTool = () => {
       canvas.style.width = displayWidth + 'px';
       canvas.style.height = displayHeight + 'px';
       
-      // Ensure canvas element has transparent background
+      // Ensure canvas element has transparent background - set multiple ways to override any defaults
       canvas.style.backgroundColor = 'transparent';
       canvas.style.background = 'transparent';
+      canvas.setAttribute('style', canvas.style.cssText + '; background: transparent !important; background-color: transparent !important;');
       
       // Clear canvas explicitly after setting dimensions (before scaling)
       // Embeds always use transparent background
       // Use physical pixel dimensions since transform is reset
+      // Clear multiple times to ensure no artifacts
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
       // Scale context to account for device pixel ratio
