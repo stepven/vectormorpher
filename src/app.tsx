@@ -986,15 +986,20 @@ const VectorMorphTool = () => {
       box-sizing: border-box;
     }
     
-    html, body {
+    html {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background-color: ${backgroundColor === 'transparent' ? 'transparent' : backgroundColor};
+    }
+    
+    body {
       width: 100%;
       height: 100%;
       margin: 0;
       padding: 0;
       overflow: hidden;
-    }
-    
-    body {
       background-color: ${backgroundColor === 'transparent' ? 'transparent' : backgroundColor};
       display: flex;
       justify-content: center;
@@ -1011,6 +1016,7 @@ const VectorMorphTool = () => {
       height: 100%;
       padding: 0;
       box-sizing: border-box;
+      background-color: ${backgroundColor === 'transparent' ? 'transparent' : backgroundColor};
     }
     
     #morphCanvas {
