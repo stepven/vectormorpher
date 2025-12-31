@@ -57,6 +57,7 @@ const VectorMorphTool = () => {
   const [draggedShapeIndex, setDraggedShapeIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [shapeVisibility, setShapeVisibility] = useState<boolean[]>([]);
+  const [editingShapeIndex, setEditingShapeIndex] = useState<number | null>(null); // Track which shape is being edited
   
   // Dropdown states
   const [showIterationParams, setShowIterationParams] = useState(true);
@@ -663,8 +664,19 @@ const VectorMorphTool = () => {
       }
     }
     
-    setShapes([...shapes, { ...currentShape, thumbnail }]);
-    setShapeVisibility([...shapeVisibility, false]); // New shapes are NOT visible by default
+    // If we're editing a duplicated shape, replace it instead of adding a new one
+    if (editingShapeIndex !== null && editingShapeIndex >= 0 && editingShapeIndex < shapes.length) {
+      const newShapes = [...shapes];
+      newShapes[editingShapeIndex] = { ...currentShape, thumbnail };
+      setShapes(newShapes);
+      // Keep the visibility state of the shape being edited
+      // Don't modify shapeVisibility array
+    } else {
+      // New shape - add it
+      setShapes([...shapes, { ...currentShape, thumbnail }]);
+      setShapeVisibility([...shapeVisibility, false]); // New shapes are NOT visible by default
+    }
+    
     setCurrentShape({
       ...currentShape,
       points: [],
@@ -673,6 +685,7 @@ const VectorMorphTool = () => {
     setSelectedPoint(null);
     setHistory([]);
     setHistoryIndex(-1);
+    setEditingShapeIndex(null); // Clear editing state
     setShowSavedShapesOnCanvas(true);
   };
   
@@ -682,6 +695,7 @@ const VectorMorphTool = () => {
     setSelectedPoint(null);
     setHistory([]);
     setHistoryIndex(-1);
+    setEditingShapeIndex(null); // Clear editing state when clearing
     setIsPlaying(false);
     // Always hide saved shapes when clearing (they'll reappear when animation plays)
     setShowSavedShapesOnCanvas(false);
@@ -783,9 +797,13 @@ const VectorMorphTool = () => {
     };
     
     // Add the duplicated shape to the shapes array
+    const newShapeIndex = shapes.length; // Index of the newly duplicated shape
     setShapes([...shapes, duplicatedShape]);
     // Make the duplicate visible by default
     setShapeVisibility([...shapeVisibility, true]);
+    
+    // Track that we're editing this duplicated shape
+    setEditingShapeIndex(newShapeIndex);
     
     // Load the duplicated shape as the current shape for editing
     setCurrentShape({
