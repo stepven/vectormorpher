@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Pause, Plus, Trash2, Move, Download, Code, ChevronDown, ChevronUp, Pencil, Edit, Eye, EyeOff } from 'lucide-react';
+import { Play, Pause, Plus, Trash2, Move, Download, Code, ChevronDown, ChevronUp, Pencil, Edit, Eye, EyeOff, Copy } from 'lucide-react';
 
 const VectorMorphTool = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -664,7 +664,7 @@ const VectorMorphTool = () => {
     }
     
     setShapes([...shapes, { ...currentShape, thumbnail }]);
-    setShapeVisibility([...shapeVisibility, true]); // New shapes are visible by default
+    setShapeVisibility([...shapeVisibility, false]); // New shapes are NOT visible by default
     setCurrentShape({
       ...currentShape,
       points: [],
@@ -747,6 +747,68 @@ const VectorMorphTool = () => {
     setSelectedPoint(null);
     
     // Hide saved shapes on canvas to show the edited shape
+    setShowSavedShapesOnCanvas(false);
+  };
+  
+  const duplicateShape = (index: number) => {
+    const shapeToDuplicate = shapes[index];
+    if (!shapeToDuplicate) return;
+    
+    // Deep copy the shape (including points and handles)
+    const duplicatedShape = {
+      points: shapeToDuplicate.points.map((p: any) => ({
+        x: p.x,
+        y: p.y,
+        handleIn: {
+          x: p.handleIn.x,
+          y: p.handleIn.y
+        },
+        handleOut: {
+          x: p.handleOut.x,
+          y: p.handleOut.y
+        }
+      })),
+      iterations: shapeToDuplicate.iterations,
+      rotation: shapeToDuplicate.rotation,
+      scale: shapeToDuplicate.scale,
+      opacity: shapeToDuplicate.opacity,
+      color: shapeToDuplicate.color,
+      startWidth: shapeToDuplicate.startWidth,
+      endWidth: shapeToDuplicate.endWidth,
+      displacementAmount: shapeToDuplicate.displacementAmount || shapeToDuplicate.distortion || 0,
+      iterationDistortion: shapeToDuplicate.iterationDistortion || 0,
+      uniformity: shapeToDuplicate.uniformity !== undefined ? shapeToDuplicate.uniformity : 0.5,
+      isClosed: shapeToDuplicate.isClosed || false,
+      thumbnail: shapeToDuplicate.thumbnail // Copy the thumbnail too
+    };
+    
+    // Add the duplicated shape to the shapes array
+    setShapes([...shapes, duplicatedShape]);
+    // Make the duplicate visible by default
+    setShapeVisibility([...shapeVisibility, true]);
+    
+    // Load the duplicated shape as the current shape for editing
+    setCurrentShape({
+      points: [...duplicatedShape.points],
+      iterations: duplicatedShape.iterations,
+      rotation: duplicatedShape.rotation,
+      scale: duplicatedShape.scale,
+      opacity: duplicatedShape.opacity,
+      color: duplicatedShape.color,
+      startWidth: duplicatedShape.startWidth,
+      endWidth: duplicatedShape.endWidth,
+      displacementAmount: duplicatedShape.displacementAmount,
+      iterationDistortion: duplicatedShape.iterationDistortion,
+      uniformity: duplicatedShape.uniformity,
+      isClosed: duplicatedShape.isClosed
+    });
+    
+    // Clear history and reset to allow new edits
+    setHistory([[...duplicatedShape.points]]);
+    setHistoryIndex(0);
+    setSelectedPoint(null);
+    
+    // Hide saved shapes on canvas to show the duplicated shape being edited
     setShowSavedShapesOnCanvas(false);
   };
   
@@ -2696,6 +2758,16 @@ const VectorMorphTool = () => {
                         title={isShapeVisible(index) ? "Hide shape from animation" : "Show shape in animation"}
                       >
                         {isShapeVisible(index) ? <Eye size={12} /> : <EyeOff size={12} />}
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          duplicateShape(index);
+                        }}
+                        className="bg-neutral-200 text-[#161616] hover:bg-neutral-300 p-1 rounded"
+                        title="Duplicate shape"
+                      >
+                        <Copy size={12} />
                       </button>
                       <button
                         onClick={(e) => {
